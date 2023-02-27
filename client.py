@@ -5,14 +5,19 @@ import asyncio
 from threading import Thread
 
 token = None
-
+action = input('What would you like to do? [L = Log-in, S = Sign-up] ').lower()
 while True:
     username = input("Username > ")
     password = getpass("Password > ")
 
-    r = requests.get("http://127.0.0.1:5000/login", data={"user": username, "pass": password})
+    if action == 's':
+        r = requests.post(f"http://127.0.0.1:5000/signup", data={"user": username, "pass": password})
+    else:
+        r = requests.get(f"http://127.0.0.1:5000/login", data={"user": username, "pass": password})
 
     if r.status_code == 200:
+        if action == 's':
+            r = requests.get(f"http://127.0.0.1:5000/login", data={"user": username, "pass": password})
         token = r.json()['token']
     else:
         print(r.json()['msg'])
@@ -36,7 +41,6 @@ else:
 def update():
     global latest_message_time
     try:
-        LINE_UP = '\033[1A'
         LINE_CLEAR = '\x1b[2K'
         t = 1
         while not time.sleep(t):
@@ -48,9 +52,9 @@ def update():
                     for message in messages[::-1]:
                         r = requests.get("http://127.0.0.1:5000/get-info", data={"token": token, "uuid": message[2]}).json()
                         if 'name' in r:
-                            print(LINE_UP, end=LINE_CLEAR)
+                            print(LINE_CLEAR, end='\r')
                             print(f'{r["name"]}: {message[1]}')
-                            print(">> ")
+                            print("[For CMDs, type .cmds] >> ", end='', flush=True)
                 else:
                     t = 5
     except Exception as e:

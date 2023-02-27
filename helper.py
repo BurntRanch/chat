@@ -1,3 +1,12 @@
+'''
+================== helper.py ==================
+    this file is meant to help the server
+    serve it's content safely and easily.
+
+    You should only consider looking at this
+ if you're looking for security vulnerabilities.
+'''
+
 import json
 import sqlite3
 from time import time
