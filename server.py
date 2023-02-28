@@ -33,9 +33,9 @@ This function can error, in which it will return this instead:
 def ping():
     t = time()
     try:
-        return Response(json.dumps({"lat": t-float(request.form['time']), "time": t}))
+        return Response(json.dumps({"lat": t-float(request.form['time']), "time": t}), mimetype="application/json")
     except ValueError:
-        return Response(helper.generateError(7), status=helper.getErrorHttpCode(7))
+        return Response(helper.generateError(7), status=helper.getErrorHttpCode(7), mimetype="application/json")
 
 '''
 main login endpoint
@@ -55,12 +55,12 @@ This function can error, in which it will return this instead:
 @app.route('/login')
 def login():
     if helper.isLoginInfoProvided(request.form):
-        return Response(helper.generateError(1), status=helper.getErrorHttpCode(1))
+        return Response(helper.generateError(1), status=helper.getErrorHttpCode(1), mimetype="application/json")
     code = helper.authenticate(request.form['user'], request.form['pass'])
     if isinstance(code, str):
         return Response(json.dumps({'token': code}), status=200)
     else:
-        return Response(helper.generateError(code), status=helper.getErrorHttpCode(code))
+        return Response(helper.generateError(code), status=helper.getErrorHttpCode(code), mimetype="application/json")
 
 '''
 main signup endpoint
@@ -80,12 +80,12 @@ This function can error, in which it will return this instead:
 @app.route('/signup', methods=["POST"])
 def signup():
     if helper.isLoginInfoProvided(request.form):
-        return Response(helper.generateError(1), status=helper.getErrorHttpCode(1))
+        return Response(helper.generateError(1), status=helper.getErrorHttpCode(1), mimetype="application/json")
     code = helper.writeUserInfo(request.form['user'], request.form['pass'])
     if code == 0:
         return Response(json.dumps({'msg': "Successfully signed up!"}), status=200)
     else:
-        return Response(helper.generateError(code), status=helper.getErrorHttpCode(code))
+        return Response(helper.generateError(code), status=helper.getErrorHttpCode(code), mimetype="application/json")
 
 '''
 main information endpoint
@@ -105,9 +105,9 @@ This function can error, in which it will return this instead:
 @app.route('/get-info')
 def getinfo():
     if not helper.isAuthenticated(request.form.get('token', 'err')):
-        return Response(helper.generateError(8), status=helper.getErrorHttpCode(8))
+        return Response(helper.generateError(8), status=helper.getErrorHttpCode(8), mimetype="application/json")
     info = helper.getinfo(helper.getUUID(request.form['token']) if 'uuid' not in request.form else request.form['uuid'])
-    return Response(json.dumps({"name": info}), status=200)
+    return Response(json.dumps({"name": info}), status=200, mimetype="application/json")
 
 '''
 main logout endpoint
@@ -127,9 +127,9 @@ This function can error, in which it will return this instead:
 def logout():
     code = helper.logout(request.form.get('token', 'err'))
     if code == 0:
-        return Response(json.dumps({'msg': "Successfully logged out!"}), status=200)
+        return Response(json.dumps({'msg': "Successfully logged out!"}), status=200, mimetype="application/json")
     else:
-        return Response(helper.generateError(code), status=helper.getErrorHttpCode(code))
+        return Response(helper.generateError(code), status=helper.getErrorHttpCode(code), mimetype="application/json")
 
 '''
 main message recieving endpoint
@@ -153,12 +153,12 @@ This function can error, in which it will return this instead:
 @app.route('/get-messages')
 def getmessages():
     if not helper.isAuthenticated(request.form.get('token', 'err')):
-        return Response(helper.generateError(8), status=helper.getErrorHttpCode(8))
+        return Response(helper.generateError(8), status=helper.getErrorHttpCode(8), mimetype="application/json")
     try:
         messages = helper.getMessages(int(request.args.get('page', 0)), float(request.args.get('after', 0)))
-        return Response(json.dumps({'messages': messages}), status=200)
+        return Response(json.dumps({'messages': messages}), status=200, mimetype="application/json")
     except ValueError:
-        return Response(helper.generateError(7), status=helper.getErrorHttpCode(7))
+        return Response(helper.generateError(7), status=helper.getErrorHttpCode(7), mimetype="application/json")
 
 '''
 main message sending endpoint
@@ -179,14 +179,14 @@ This function can error, in which it will return this instead:
 @app.route('/send-message', methods=["POST"])
 def sendmessage():
     if not helper.isAuthenticated(request.form.get('token', 'err')):
-        return Response(helper.generateError(8), status=helper.getErrorHttpCode(8))
+        return Response(helper.generateError(8), status=helper.getErrorHttpCode(8), mimetype="application/json")
     if not 'content' in request.form:
-        return Response(helper.generateError(9), status=helper.getErrorHttpCode(9))
+        return Response(helper.generateError(9), status=helper.getErrorHttpCode(9), mimetype="application/json")
     try:
         messageID = helper.sendMessage(request.form['content'], request.form['token'])
-        return Response(json.dumps({'msg': 'Message sent successfully!', 'messageID': messageID}), status=200)
+        return Response(json.dumps({'msg': 'Message sent successfully!', 'messageID': messageID}), status=200, mimetype="application/json")
     except ValueError:
-        return Response(helper.generateError(7), status=helper.getErrorHttpCode(7))
+        return Response(helper.generateError(7), status=helper.getErrorHttpCode(7), mimetype="application/json")
 
 '''
 main message deletion endpoint
@@ -206,17 +206,17 @@ This function can error, in which it will return this instead:
 @app.route('/delete-message', methods=["POST"])
 def deletemessage():
     if not helper.isAuthenticated(request.form.get('token', 'err')):
-        return Response(helper.generateError(8), status=helper.getErrorHttpCode(8))
+        return Response(helper.generateError(8), status=helper.getErrorHttpCode(8), mimetype="application/json")
     if not 'messageID' in request.form:
-        return Response(helper.generateError(9), status=helper.getErrorHttpCode(9))
+        return Response(helper.generateError(9), status=helper.getErrorHttpCode(9), mimetype="application/json")
     try:
         code = helper.deleteMessage(request.form['messageID'], request.form['token'])
         if code == 0:
-            return Response(json.dumps({'msg': 'Message deleted successfully!'}), status=200)
+            return Response(json.dumps({'msg': 'Message deleted successfully!'}), status=200, mimetype="application/json")
         else:
-            return Response(helper.generateError(code), status=helper.getErrorHttpCode(code))
+            return Response(helper.generateError(code), status=helper.getErrorHttpCode(code), mimetype="application/json")
     except ValueError:
-        return Response(helper.generateError(7), status=helper.getErrorHttpCode(7))
+        return Response(helper.generateError(7), status=helper.getErrorHttpCode(7), mimetype="application/json")
 
 '''
 rate limiting middleware
@@ -240,7 +240,7 @@ def before_request():
             isDecremented = True
         # still more than 20 requests? return error.
         if rateLimit[0] >= 20:
-            return Response(helper.generateError(11), status=helper.getErrorHttpCode(11))
+            return Response(helper.generateError(11), status=helper.getErrorHttpCode(11), mimetype="application/json")
         if not isDecremented:
             helper.incrementSessionRateLimit(request.form['token'])
             print(f'incremented rate limit for {request.form["token"]} to {rateLimit[0]+1}')
@@ -255,7 +255,7 @@ def before_request():
             isDecremented = True
         # still more than 10 requests? return error.
         if rateLimit[0] >= 10:
-            return Response(helper.generateError(11), status=helper.getErrorHttpCode(11))
+            return Response(helper.generateError(11), status=helper.getErrorHttpCode(11), mimetype="application/json")
         if not isDecremented:
             helper.incrementSessionRateLimit(request.remote_addr)
             print(f'incremented rate limit for {request.remote_addr} to {rateLimit[0]+1}')
