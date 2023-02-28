@@ -49,7 +49,7 @@ def update():
         LINE_CLEAR = '\x1b[2K'
         t = 1
         while not time.sleep(t):
-            r = requests.get(f"http://{IP}/get-messages?after={quote(latest_message_time)}", data={"token": token}).json()
+            r = requests.get(f"http://{IP}/get-messages?after={quote(str(latest_message_time))}", data={"token": token}).json()
             if 'messages' in r:
                 messages = r['messages']
                 if len(messages) > 0:
