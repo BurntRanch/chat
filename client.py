@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 token = None
 IP = parse_url(input('Insert server ip: '))
-IP = IP.host + ':' + str(IP.port)
+IP = IP.host + (':' + str(IP.port) if IP.port is not None else '')
 
 action = input('What would you like to do? [L = Log-in, S = Sign-up] ').lower()
 while True:
