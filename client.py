@@ -58,7 +58,8 @@ def update():
                             print(f'{r["name"]}: {message[1]}')
                             print("[For CMDs, type .cmds] >> ", end='', flush=True)
                 else:
-                    t = 5
+                    # save bandwidth when there is nothing being sent.
+                    t = 2
     except Exception as e:
         print("Exception!", e.args)
 

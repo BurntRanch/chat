@@ -14,6 +14,9 @@ from bcrypt import hashpw, checkpw, gensalt
 from hashlib import md5, sha256
 from secrets import token_hex
 
+AUTHENTICATED_RATELIMIT_TIMER = 2
+RATELIMIT_TIMER = 10
+
 connection = sqlite3.connect("main.db")
 try:
     connection.execute("CREATE TABLE IF NOT EXISTS users (username STRING, uuid STRING PRIMARY KEY UNIQUE, password STRING)")
@@ -129,7 +132,7 @@ def incrementSessionRateLimit(token : str):
     is_real = isAuthenticated(token)
     try:
         if is_real or isIPSession(token):
-            connection.execute("UPDATE sessions SET limitTimer = limitTimer + 1, lastTimerTime = ? WHERE token = ?", (time()+(10 if not is_real else 5), sha256(token.encode()).hexdigest(),))
+            connection.execute("UPDATE sessions SET limitTimer = limitTimer + 1, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
             return 0
         else:
             return 6
@@ -141,7 +144,7 @@ def decrementSessionRateLimit(token : str):
     is_real = isAuthenticated(token)
     try:
         if is_real or isIPSession(token):
-            connection.execute("UPDATE sessions SET limitTimer = limitTimer - 1, lastTimerTime = ? WHERE token = ?", (time()+(10 if not is_real else 5), sha256(token.encode()).hexdigest(),))
+            connection.execute("UPDATE sessions SET limitTimer = limitTimer - 1, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
             return 0
         else:
             return 6
@@ -150,9 +153,10 @@ def decrementSessionRateLimit(token : str):
 
 def resetSessionRateLimit(token : str):
     connection = sqlite3.connect("main.db")
+    is_real = isAuthenticated(token)
     try:
         if isAuthenticated(token) or isIPSession(token):
-            connection.execute("UPDATE sessions SET limitTimer = 0, lastTimerTime = ? WHERE token = ?", (time()+10, sha256(token.encode()).hexdigest(),))
+            connection.execute("UPDATE sessions SET limitTimer = 0, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
             return 0
         else:
             return 6

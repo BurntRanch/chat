@@ -228,7 +228,8 @@ for anonymous "IP sessions" the rate limit is max 10 requests per 10 seconds
 '''
 def before_request():
     # authenticated by token?
-    if helper.isAuthenticated(request.form.get('token', 'err')) and not request.url_rule.rule ==  '/logout':
+    is_auth = helper.isAuthenticated(request.form.get('token', 'err'))
+    if is_auth and not request.url_rule.rule ==  '/logout':
         # get their rate limit and the last time the rate limit was incremented
         rateLimit = helper.getSessionRateLimit(request.form.get('token', 'err'))
         isDecremented = False
@@ -243,7 +244,7 @@ def before_request():
         if not isDecremented:
             helper.incrementSessionRateLimit(request.form['token'])
             print(f'incremented rate limit for {request.form["token"]} to {rateLimit[0]+1}')
-    elif helper.isIPSession(request.remote_addr):
+    elif helper.isIPSession(request.remote_addr) and not is_auth:
         # get their rate limit and the last time the rate limit was incremented
         rateLimit = helper.getSessionRateLimit(request.remote_addr)
         isDecremented = False
@@ -258,10 +259,10 @@ def before_request():
         if not isDecremented:
             helper.incrementSessionRateLimit(request.remote_addr)
             print(f'incremented rate limit for {request.remote_addr} to {rateLimit[0]+1}')
-    elif not helper.isAuthenticated(request.form.get('token', 'err')):
+    elif not is_auth:
         helper.createIPSession(request.remote_addr)
     return None
 
 app.before_request(before_request)
 
-app.run()
+app.run('0.0.0.0')
