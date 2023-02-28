@@ -244,23 +244,23 @@ def before_request():
         if not isDecremented:
             helper.incrementSessionRateLimit(request.form['token'])
             print(f'incremented rate limit for {request.form["token"]} to {rateLimit[0]+1}')
-    elif helper.isIPSession(request.remote_addr) and not is_auth:
+    elif helper.isIPSession(request.headers.get('X-Forwarded-For', request.remote_addr)) and not is_auth:
         # get their rate limit and the last time the rate limit was incremented
-        rateLimit = helper.getSessionRateLimit(request.remote_addr)
+        rateLimit = helper.getSessionRateLimit(request.headers.get('X-Forwarded-For', request.remote_addr))
         isDecremented = False
         if time() >= rateLimit[1] and rateLimit[0] > 0:
-            helper.resetSessionRateLimit(request.remote_addr)
-            print(f"decremented rate limit for {request.remote_addr} to {rateLimit[0] - 1}")
+            helper.resetSessionRateLimit(request.headers.get('X-Forwarded-For', request.remote_addr))
+            print(f"decremented rate limit for {request.headers.get('X-Forwarded-For', request.remote_addr)} to {rateLimit[0] - 1}")
             rateLimit = (rateLimit[0]-1, rateLimit[1])
             isDecremented = True
         # still more than 10 requests? return error.
         if rateLimit[0] >= 10:
             return Response(helper.generateError(11), status=helper.getErrorHttpCode(11), mimetype="application/json")
         if not isDecremented:
-            helper.incrementSessionRateLimit(request.remote_addr)
-            print(f'incremented rate limit for {request.remote_addr} to {rateLimit[0]+1}')
+            helper.incrementSessionRateLimit(request.headers.get('X-Forwarded-For', request.remote_addr))
+            print(f'incremented rate limit for {request.headers.get("X-Forwarded-For", request.remote_addr)} to {rateLimit[0]+1}')
     elif not is_auth:
-        helper.createIPSession(request.remote_addr)
+        helper.createIPSession(request.headers.get('X-Forwarded-For', request.remote_addr))
     return None
 
 app.before_request(before_request)

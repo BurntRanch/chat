@@ -91,6 +91,7 @@ def sendMessages():
             if msg == '.help':
                 print('Commands:')
                 print('.delete: Deletes your latest message.')
+                print()
             if msg == '.delete':
                 r = requests.post(f'http://{IP}/delete-message', data={"token": token, "messageID": latest_message_ID})
                 if r.status_code != 200:
