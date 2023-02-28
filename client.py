@@ -3,9 +3,12 @@ import requests
 import time
 import asyncio
 from threading import Thread
+from urllib3.util.url import parse_url
+from urllib.parse import quote
 
 token = None
-IP = input('Insert server ip: ')
+IP = parse_url(input('Insert server ip: '))
+IP = IP.host + ':' + str(IP.port)
 
 action = input('What would you like to do? [L = Log-in, S = Sign-up] ').lower()
 while True:
@@ -46,7 +49,7 @@ def update():
         LINE_CLEAR = '\x1b[2K'
         t = 1
         while not time.sleep(t):
-            r = requests.get(f"http://{IP}/get-messages?after={latest_message_time}", data={"token": token}).json()
+            r = requests.get(f"http://{IP}/get-messages?after={quote(latest_message_time)}", data={"token": token}).json()
             if 'messages' in r:
                 messages = r['messages']
                 if len(messages) > 0:
