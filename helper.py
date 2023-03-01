@@ -208,16 +208,25 @@ def sendMessage(content : str, token : str):
     finally:
         commitAndClose(connection)
 
-def deleteMessage(messageID : str, token : str):
+def deleteMessage(messageID : str|None, token : str):
     connection = sqlite3.connect("main.db")
     try:
-        cursor = connection.execute("SELECT authorUUID FROM messages WHERE messageID = ?", (messageID,))
-        uuid = cursor.fetchone()
+        if messageID is not None:
+            cursor = connection.execute("SELECT authorUUID FROM messages WHERE messageID = ?", (messageID,))
+        else:
+            cursor = connection.execute("SELECT EXISTS(SELECT 1 FROM messages WHERE authorUUID = ?)", (getUUID(token),))
+        if messageID is None:
+            if cursor.fetchone()[0] == 0:
+                return 10
+        uuid = cursor.fetchone() if messageID is not None else (getUUID(token),)
         if uuid is None:
             return 10
         uuid ,= uuid
         if getUUID(token) == uuid:
-            connection.execute("DELETE FROM messages WHERE messageID = ?", (messageID,))
+            if messageID is not None:
+                connection.execute("DELETE FROM messages WHERE messageID = ?", (messageID,))
+            else:
+                connection.execute("DELETE FROM messages WHERE authorUUID = ? ORDER BY time DESC LIMIT 1", (uuid,))
             return 0
         return 8
     finally:

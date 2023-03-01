@@ -194,7 +194,8 @@ main message deletion endpoint
 ARGUMENTS:
     json:
         token: your auth token
-        messageID: the message ID to delete, it has to be owned by the user.
+        messageID: optional, the message ID to delete, it has to be owned by the user.
+                   if the value is missing, it will be replaced with the user's latest message.
 
 RETURNS:
     json:
@@ -207,10 +208,8 @@ This function can error, in which it will return this instead:
 def deletemessage():
     if not helper.isAuthenticated(request.form.get('token', 'err')):
         return Response(helper.generateError(8), status=helper.getErrorHttpCode(8), mimetype="application/json")
-    if not 'messageID' in request.form:
-        return Response(helper.generateError(9), status=helper.getErrorHttpCode(9), mimetype="application/json")
     try:
-        code = helper.deleteMessage(request.form['messageID'], request.form['token'])
+        code = helper.deleteMessage(request.form.get('messageID', None), request.form['token'])
         if code == 0:
             return Response(json.dumps({'msg': 'Message deleted successfully!'}), status=200, mimetype="application/json")
         else:
@@ -265,4 +264,4 @@ def before_request():
 
 app.before_request(before_request)
 
-app.run('0.0.0.0')
+app.run('0.0.0.0', ssl_context=('cert.pem', 'key.pem'))
