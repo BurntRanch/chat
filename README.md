@@ -14,7 +14,7 @@ You just need to download the server.py and helper.py files, Then you need to pr
 Just do `python3 server.py`
 
 ### Setting up certificates
-To setup your certificate, just put the certificate in `cert.pem`, and put your key in `key.pem`, Hopefully no more modification is needed unless you are configuring your own self-signed in which case..
+To setup your certificate, just put the certificate in `cert.pem`, and put your key in `key.pem`, Hopefully no more modification is needed unless you are configuring your own self-signed certificate in which case..
 
 ### Setting up self-signed certificates
 You just need to run this command to generate one in the first place:
