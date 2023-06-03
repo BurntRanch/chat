@@ -53,10 +53,7 @@ getErrorHttpCode = lambda code: errorLookup.get(code, [None, 500])[1]
 def writeUserInfo(username : str, password : str):
     if not isLoginInfoValid(username, password):
         return 2
-    # allows us to see the scope of an error if we seperate backend and frontend functions
-    return _writeUserInfo(username, password)
-
-def _writeUserInfo(username : str, password : str):
+    
     connection = sqlite3.connect("main.db")
     try:
         cursor = connection.execute("SELECT EXISTS(SELECT 1 FROM users WHERE uuid = ?)", (md5(username.encode()).hexdigest(),))
@@ -110,56 +107,47 @@ def getUUID(token : str):
 def getinfo(uuid : str):
     connection = sqlite3.connect("main.db")
     try:
-        print(uuid)
         cursor = connection.execute("SELECT username FROM users WHERE uuid = ?", (uuid,))
         return cursor.fetchone()[0]
     finally:
         commitAndClose(connection)
 
 def logout(token : str):
+    if not isAuthenticated(token):
+        return 6
     connection = sqlite3.connect("main.db")
     try:
-        if isAuthenticated(token):
-            connection.execute("DELETE FROM sessions WHERE token = ?", (sha256(token.encode()).hexdigest(),))
-            return 0
-        else:
-            return 6
+        connection.execute("DELETE FROM sessions WHERE token = ?", (sha256(token.encode()).hexdigest(),))
     finally:
         commitAndClose(connection)
 
 def incrementSessionRateLimit(token : str):
+    if not isAuthenticated(token) or isIPSession(token):
+        return 6
     connection = sqlite3.connect("main.db")
-    is_real = isAuthenticated(token)
     try:
-        if is_real or isIPSession(token):
-            connection.execute("UPDATE sessions SET limitTimer = limitTimer + 1, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
-            return 0
-        else:
-            return 6
+        connection.execute("UPDATE sessions SET limitTimer = limitTimer + 1, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
+        return 0
     finally:
         commitAndClose(connection)
 
 def decrementSessionRateLimit(token : str):
+    if not isAuthenticated(token) or isIPSession(token):
+        return 6
     connection = sqlite3.connect("main.db")
-    is_real = isAuthenticated(token)
     try:
-        if is_real or isIPSession(token):
-            connection.execute("UPDATE sessions SET limitTimer = limitTimer - 1, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
-            return 0
-        else:
-            return 6
+        connection.execute("UPDATE sessions SET limitTimer = limitTimer - 1, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
+        return 0
     finally:
         commitAndClose(connection)
 
 def resetSessionRateLimit(token : str):
+    if not isAuthenticated(token) or isIPSession(token):
+        return 6
     connection = sqlite3.connect("main.db")
-    is_real = isAuthenticated(token)
     try:
-        if isAuthenticated(token) or isIPSession(token):
-            connection.execute("UPDATE sessions SET limitTimer = 0, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
-            return 0
-        else:
-            return 6
+        connection.execute("UPDATE sessions SET limitTimer = 0, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
+        return 0
     finally:
         commitAndClose(connection)
 
@@ -182,12 +170,12 @@ def isIPSession(token : str):
         commitAndClose(connection)
 
 def getSessionRateLimit(token : str):
+    if not isAuthenticated(token) or isIPSession(token):
+        return 0
     connection = sqlite3.connect("main.db")
     try:
-        if isAuthenticated(token) or isIPSession(token):
-            cursor = connection.execute("SELECT limitTimer, lastTimerTime FROM sessions WHERE token = ?", (sha256(token.encode()).hexdigest(),))
-            return cursor.fetchone()
-        return 0
+        cursor = connection.execute("SELECT limitTimer, lastTimerTime FROM sessions WHERE token = ?", (sha256(token.encode()).hexdigest(),))
+        return cursor.fetchone()
     finally:
         commitAndClose(connection)
 
