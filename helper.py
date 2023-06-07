@@ -118,6 +118,7 @@ def logout(token : str):
     connection = sqlite3.connect("main.db")
     try:
         connection.execute("DELETE FROM sessions WHERE token = ?", (sha256(token.encode()).hexdigest(),))
+        return 0
     finally:
         commitAndClose(connection)
 
@@ -126,7 +127,7 @@ def incrementSessionRateLimit(token : str):
         return 6
     connection = sqlite3.connect("main.db")
     try:
-        connection.execute("UPDATE sessions SET limitTimer = limitTimer + 1, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
+        connection.execute("UPDATE sessions SET limitTimer = limitTimer + 1, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not isAuthenticated(token) else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
         return 0
     finally:
         commitAndClose(connection)
@@ -136,7 +137,7 @@ def decrementSessionRateLimit(token : str):
         return 6
     connection = sqlite3.connect("main.db")
     try:
-        connection.execute("UPDATE sessions SET limitTimer = limitTimer - 1, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
+        connection.execute("UPDATE sessions SET limitTimer = limitTimer - 1, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not isAuthenticated(token) else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
         return 0
     finally:
         commitAndClose(connection)
@@ -146,7 +147,7 @@ def resetSessionRateLimit(token : str):
         return 6
     connection = sqlite3.connect("main.db")
     try:
-        connection.execute("UPDATE sessions SET limitTimer = 0, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not is_real else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
+        connection.execute("UPDATE sessions SET limitTimer = 0, lastTimerTime = ? WHERE token = ?", (time()+(RATELIMIT_TIMER if not isAuthenticated(token) else AUTHENTICATED_RATELIMIT_TIMER), sha256(token.encode()).hexdigest(),))
         return 0
     finally:
         commitAndClose(connection)
@@ -170,7 +171,7 @@ def isIPSession(token : str):
         commitAndClose(connection)
 
 def getSessionRateLimit(token : str):
-    if not isAuthenticated(token) or isIPSession(token):
+    if not isAuthenticated(token) and not isIPSession(token):
         return 0
     connection = sqlite3.connect("main.db")
     try:
@@ -214,7 +215,7 @@ def deleteMessage(messageID : str|None, token : str):
             if messageID is not None:
                 connection.execute("DELETE FROM messages WHERE messageID = ?", (messageID,))
             else:
-                connection.execute("DELETE FROM messages WHERE authorUUID = ? ORDER BY time DESC LIMIT 1", (uuid,))
+                connection.execute("DELETE FROM messages WHERE authorUUID IN (SELECT authorUUID FROM messages WHERE authorUUID = ? ORDER BY time DESC LIMIT 1)", (uuid,))
             return 0
         return 8
     finally:

@@ -156,6 +156,7 @@ def getmessages():
         return Response(helper.generateError(8), status=helper.getErrorHttpCode(8), mimetype="application/json")
     try:
         messages = helper.getMessages(int(request.args.get('page', 0)), float(request.args.get('after', 0)))
+        messages.reverse()
         return Response(json.dumps({'messages': messages}), status=200, mimetype="application/json")
     except ValueError:
         return Response(helper.generateError(7), status=helper.getErrorHttpCode(7), mimetype="application/json")

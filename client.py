@@ -46,7 +46,7 @@ if 'messages' in r:
     messages = r['messages']
     if len(messages) > 0:
         latest_message_time = messages[0][3]
-        for message in messages[::-1]:
+        for message in messages:
             r = requests.get(f"https://{IP}/get-info", data={"token": token, "uuid": message[2]}).json()
             print(f'{r["name"]}: {message[1]}')
 else:
@@ -58,12 +58,13 @@ def update():
         LINE_CLEAR = '\x1b[2K'
         t = 1
         while not time.sleep(t):
+            print(latest_message_time)
             r = requests.get(f"https://{IP}/get-messages?after={quote(str(latest_message_time))}", data={"token": token}).json()
             if 'messages' in r:
                 messages = r['messages']
                 if len(messages) > 0:
                     latest_message_time = r['messages'][0][3]
-                    for message in messages[::-1]:
+                    for message in messages:
                         r = requests.get(f"https://{IP}/get-info", data={"token": token, "uuid": message[2]}).json()
                         if 'name' in r:
                             print(LINE_CLEAR, end='\r')
