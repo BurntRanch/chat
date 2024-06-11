@@ -38,9 +38,4 @@ Just download the client.py file, install any self-signed certificates and run t
 That will launch the client.
 
 ## Contributing
-I appreciate any contributions, But you have to make sure you don't do these mistakes:
-1. Making a public pull request for a serious security vulnerability
-2. Making a pull request just to rename a variable (unless it causes inconsistencies in code)
-3. Making a pull request to delete a function that is needed with no reason (read the comments of every function to see why it exists first)
-
-That's it, we appreciate your contributions!
+Yeah, go for it.
